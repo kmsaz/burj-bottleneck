@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Burj Bottleneck — Elevator Scheduling Simulation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/styles.css" />
+  <script type="module" src="/src/main.js"></script>
+</head>
+<body>
+  <!-- Top Navigation Header -->
+  <header class="top-bar">
+    <div class="brand">
+      <div class="title">
+        <span class="brand-glow"></span>
+        The Burj Bottleneck
+      </div>
+      <div class="subtitle">Al Noor Business Tower · Abu Dhabi</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="header-clock-wrap">
+      <span class="clock-label">Simulated Time</span>
+      <div class="clock" id="clock">07:00:00</div>
+    </div>
+  </header>
+
+  <!-- Main 3-Column Balanced Workspace -->
+  <main class="main-layout">
+    <!-- 1. Left: Architectural Tower Elevation -->
+    <section class="tower-section">
+      <div class="section-header">
+        <div class="header-title-group">
+          <h2>Tower Elevation</h2>
+          <span class="header-badge">12 Levels</span>
+        </div>
+        <div class="tower-legend">
+          <div class="legend-item"><span class="legend-dot a"></span> Car A</div>
+          <div class="legend-item"><span class="legend-dot b"></span> Car B</div>
+        </div>
+      </div>
+      <div id="building-mount"></div>
+    </section>
+
+    <!-- 2. Center: Elevator Telemetry & Dispatch Operations -->
+    <section class="telemetry-section">
+      <div class="section-header">
+        <div class="header-title-group">
+          <h2>Elevator Telemetry</h2>
+          <span class="header-badge live">Live Telemetry</span>
+        </div>
+      </div>
+
+      <div class="telemetry-body">
+        <!-- Live Elevator Status Cards -->
+        <div class="telemetry-grid">
+          <!-- Elevator A Card -->
+          <div class="telemetry-card card-el-a">
+            <div class="card-header">
+              <span class="car-tag tag-a">Elevator A</span>
+              <span class="state-pill pill-a" id="tele-status-a">IDLE</span>
+            </div>
+            <div class="tele-metrics">
+              <div class="metric-block">
+                <span class="m-label">Current Floor</span>
+                <span class="m-value" id="tele-floor-a">G</span>
+              </div>
+              <div class="metric-block">
+                <span class="m-label">Target Floor</span>
+                <span class="m-value" id="tele-target-a">—</span>
+              </div>
+              <div class="metric-block">
+                <span class="m-label">Car Occupancy</span>
+                <span class="m-value" id="tele-load-a">0 / 10</span>
+              </div>
+            </div>
+            <div class="capacity-bar-wrap">
+              <div class="capacity-bar-fill fill-a" id="tele-bar-a" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <!-- Elevator B Card -->
+          <div class="telemetry-card card-el-b">
+            <div class="card-header">
+              <span class="car-tag tag-b">Elevator B</span>
+              <span class="state-pill pill-b" id="tele-status-b">IDLE</span>
+            </div>
+            <div class="tele-metrics">
+              <div class="metric-block">
+                <span class="m-label">Current Floor</span>
+                <span class="m-value" id="tele-floor-b">G</span>
+              </div>
+              <div class="metric-block">
+                <span class="m-label">Target Floor</span>
+                <span class="m-value" id="tele-target-b">—</span>
+              </div>
+              <div class="metric-block">
+                <span class="m-label">Car Occupancy</span>
+                <span class="m-value" id="tele-load-b">0 / 10</span>
+              </div>
+            </div>
+            <div class="capacity-bar-wrap">
+              <div class="capacity-bar-fill fill-b" id="tele-bar-b" style="width: 0%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hourly Demand Patterns & Period Inspector -->
+        <div class="analytics-card">
+          <div class="analytics-header">
+            <div class="analytics-title-group">
+              <span class="analytics-title">Demand Patterns &amp; Period Inspector</span>
+              <span class="analytics-hint">Select a time window or click an hour bar to inspect bottlenecks</span>
+            </div>
+            <select id="analytics-period-select" class="analytics-select" aria-label="Select Time Period"></select>
+          </div>
+
+          <!-- 15-Bar Interactive Distribution Histogram -->
+          <div class="histogram-section">
+            <div class="histogram-header">
+              <span class="histogram-title">Hourly Passenger Distribution (07:00 → 22:00)</span>
+              <span class="histogram-sub">Click any hour bar to filter</span>
+            </div>
+            <div class="hourly-histogram" id="hourly-histogram"></div>
+          </div>
+
+          <!-- Deep-Dive Period Metrics -->
+          <div class="analytics-grid">
+            <div class="analytics-stat-box">
+              <span class="a-label">Period Volume</span>
+              <span class="a-value" id="analytics-pax">—</span>
+            </div>
+            <div class="analytics-stat-box">
+              <span class="a-label">Busiest Origin</span>
+              <span class="a-value" id="analytics-origin">—</span>
+            </div>
+            <div class="analytics-stat-box">
+              <span class="a-label">Busiest Destination</span>
+              <span class="a-value" id="analytics-dest">—</span>
+            </div>
+            <div class="analytics-stat-box">
+              <span class="a-label">Period Wait Times</span>
+              <span class="a-value" id="analytics-wait">—</span>
+            </div>
+          </div>
+
+          <!-- Car Workload Balance -->
+          <div class="workload-box">
+            <div class="workload-header">
+              <span class="workload-title">Car Workload Balance</span>
+              <div class="workload-labels">
+                <span class="workload-tag-a" id="analytics-split-a">Car A: 50%</span>
+                <span class="workload-tag-b" id="analytics-split-b">Car B: 50%</span>
+              </div>
+            </div>
+            <div class="workload-bar-wrap">
+              <div class="workload-bar-a" id="analytics-bar-a" style="width: 50%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 15-Hour Schedule Progress -->
+        <div class="schedule-card">
+          <div class="schedule-header">
+            <span>Operating Day Progress</span>
+            <span class="schedule-hours">07:00 → 22:00</span>
+          </div>
+          <div class="schedule-track">
+            <div class="schedule-fill" id="timeline-bar" style="width: 0%;"></div>
+          </div>
+          <div class="schedule-phases">
+            <span>07:00 Morning Rush</span>
+            <span>12:00 Midday Flow</span>
+            <span>17:00 Evening Rush</span>
+            <span>22:00 Cutoff</span>
+          </div>
+        </div>
+
+        <!-- Live Dispatch Feed -->
+        <div class="dispatch-card">
+          <div class="dispatch-header">
+            <span>Live Dispatch & Passenger Log</span>
+            <span class="pulse-dot"></span>
+          </div>
+          <div class="event-log" id="event-log">
+            <div class="log-line">System initialized. Ready to run.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Right: Simulation Controls & Evaluation Benchmark -->
+    <aside class="side-panel">
+      <!-- Controls -->
+      <section class="side-section">
+        <h3>Simulation Controls</h3>
+        <div class="controls-col">
+          <div class="algo-select-wrap">
+            <label class="control-label" for="sim-algo">Active Algorithm</label>
+            <select id="sim-algo" title="Choose which algorithm to simulate live">
+              <option value="participant" selected>Participant Algorithm</option>
+              <option value="baseline">Baseline (Nearest)</option>
+            </select>
+          </div>
+          <div class="buttons-row">
+            <button id="btn-run" class="btn-primary">▶ Run</button>
+            <button id="btn-pause">⏸ Pause</button>
+            <button id="btn-reset">↺ Reset</button>
+            <select id="sim-speed" title="Simulation Speed">
+              <option value="1">1x</option>
+              <option value="5">5x</option>
+              <option value="30" selected>30x</option>
+              <option value="120">120x</option>
+            </select>
+          </div>
+        </div>
+        <div id="sim-ended-msg" class="sim-ended-msg">Simulation finished (22:00)</div>
+      </section>
+
+      <!-- Live Key Performance Indicators -->
+      <section class="side-section">
+        <h3>Live Statistics</h3>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-label">Waiting in Tower</div>
+            <div class="stat-value" id="stat-waiting">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Inside Elevators</div>
+            <div class="stat-value" id="stat-riding">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Completed Trips</div>
+            <div class="stat-value" id="stat-done">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Avg Wait Time</div>
+            <div class="stat-value" id="stat-avg-wait">0s</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Headless Benchmark Evaluation -->
+      <section class="side-section">
+        <h3>Evaluation & Benchmark</h3>
+        <p class="info-text">
+          Evaluate both algorithms across the full 15-hour day on identical passenger schedules:
+        </p>
+        <button id="btn-eval" class="btn-eval">Run Full Evaluation</button>
+        <table id="eval-results">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Baseline</th>
+              <th>Participant</th>
+              <th>Delta</th>
+            </tr>
+          </thead>
+          <tbody id="eval-tbody"></tbody>
+        </table>
+      </section>
+
+      <!-- Participant Quick Guide -->
+      <section class="side-section">
+        <h3>Participant File</h3>
+        <p class="info-text">Edit your scheduling algorithm in:</p>
+        <code class="file-path">src/algorithms/participant.js</code>
+      </section>
+    </aside>
+  </main>
+
+</body>
+</html>

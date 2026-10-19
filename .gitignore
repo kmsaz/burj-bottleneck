@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Test / coverage artifacts
+coverage/
+
+# Local workspace metadata
+.freebuff/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.lnk
+*.log
