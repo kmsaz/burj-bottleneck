@@ -6,6 +6,17 @@
  * arrives, and the car you return becomes that group's pickup car for the
  * rest of its journey — assignments are never re-dispatched.
  *
+ * LANGUAGE SUPPORT
+ *   This file is read as text and its language is detected automatically, so
+ *   you can write Python here instead of JavaScript:
+ *
+ *       def assign_elevator(request, elevators, current_time):
+ *           return 0
+ *
+ *   JavaScript and Python both run fully offline in the browser (Python via a
+ *   bundled Pyodide runtime). C++, C#, Java, Go, Rust and TypeScript are
+ *   recognised and reported in the UI, but no offline runtime ships for them.
+ *
  * WHAT YOU RECEIVE
  *   request     { origin, dest, count }
  *                 origin  floor the group is waiting on (-1 = B1, 0 = G, 1–10)

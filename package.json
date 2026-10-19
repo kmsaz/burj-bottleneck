@@ -14,5 +14,8 @@
     "jsdom": "^29.1.1",
     "vite": "^5.4.0",
     "vitest": "^2.1.0"
+  },
+  "dependencies": {
+    "pyodide": "^314.0.7"
   }
 }

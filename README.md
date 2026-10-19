@@ -56,6 +56,29 @@ It ships **blank**: a documented template that currently sends every group to El
 
 **Do not modify the baseline, engine, or evaluation files.**
 
+### Languages
+
+`participant.js` is read as **text**, not compiled as a JavaScript module, and its language is detected from the contents. The language that was detected is always shown under the algorithm selector, so you can see how your file was interpreted.
+
+| Language | Runs offline in the browser | Notes |
+|---|---|---|
+| **JavaScript** | ✅ | Runs natively. Must expose `assignElevator(request, elevators, currentTime)`. |
+| **Python** | ✅ | Runs on a bundled Pyodide runtime (CPython in WebAssembly). Must expose `assignElevator` or `assign_elevator`. The runtime is served from your own site, never a CDN; first use loads about 6 MB and takes a few seconds. |
+| **C++**, **C#**, **Java**, **Go**, **Rust** | ❌ | Detected and reported with the reason. No compiler or runtime for these ships in the browser, so they are not executed. |
+| **TypeScript** | ❌ | Detected, but must be compiled to JavaScript first. |
+
+Python example: [`examples/participant.py`](examples/participant.py). C++ and C# references: [`examples/participant.cpp`](examples/participant.cpp), [`examples/participant.cs`](examples/participant.cs).
+
+Python receives the request and cars as ordinary dicts and lists:
+
+```python
+def assign_elevator(request, elevators, current_time):
+    # request:   {"origin": 3, "dest": 9, "count": 2}
+    # elevators: [{"id": 0, "floor": 0, "state": "IDLE", "occupancy": 0,
+    #              "capacity": 10, "destinations": [], "assignmentCount": 0}, ...]
+    return 0
+```
+
 ---
 
 ## 3. Algorithm Interface

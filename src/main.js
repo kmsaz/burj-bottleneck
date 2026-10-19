@@ -26,7 +26,10 @@ import {
   updateAnalytics,
 } from './ui/controls.js';
 import { assignElevator as baselineAlgo }    from './algorithms/baseline.js';
-import { assignElevator as participantAlgo } from './algorithms/participant.js';
+import {
+  loadParticipantScheduler as loadParticipantSchedulerModule,
+  describeParticipant as describeParticipantModule,
+} from './algorithms/runtime.js';
 import { assignElevator as starterAlgo }     from './algorithms/starter.js';
 import { assignElevator as developerAlgo }   from './algorithms/developer.js';
 import { ElevatorState } from './engine/elevator.js';
@@ -51,15 +54,25 @@ const SPEED_OPTIONS = {
   '120': 120,
 };
 
-let currentParticipantAlgo = participantAlgo;
+// Kept in an object so hot module replacement can swap in a freshly loaded
+// runtime (participant.js is raw text, so its content arrives through here).
+let runtimeApi = {
+  loadParticipantScheduler: loadParticipantSchedulerModule,
+  describeParticipant: describeParticipantModule,
+};
+
+// Participant source is loaded at runtime (JavaScript or Python), so this
+// starts as a safe fallback until the runtime reports in.
+let currentParticipantAlgo = () => 0;
+let participantInfo = runtimeApi.describeParticipant();
 
 // Every selectable algorithm, keyed by the <option> value in index.html.
-// Each `get` returns the scheduler function itself; the participant entry is a
-// getter so Vite hot-reload can swap that module without a full reload.
+// Each `get` returns the scheduler function itself; labels may be functions so
+// the participant entry can show its detected language.
 const ALGORITHMS = {
-  participant: { label: 'Participant (blank)', get: () => currentParticipantAlgo },
-  starter:     { label: 'Starter (Nearest)',   get: () => starterAlgo },
-  developer:   { label: 'Developer (Ideal)',   get: () => developerAlgo },
+  participant: { label: () => `Participant (${participantInfo.label})`, get: () => currentParticipantAlgo },
+  starter:     { label: 'Starter (Nearest)',    get: () => starterAlgo },
+  developer:   { label: 'Developer (Ideal)',    get: () => developerAlgo },
   baseline:    { label: 'Baseline (Protected)', get: () => baselineAlgo },
 };
 
@@ -74,7 +87,8 @@ function getActiveAlgo() {
 }
 
 function getActiveAlgoLabel() {
-  return ALGORITHMS[getSelectedKey()].label;
+  const entry = ALGORITHMS[getSelectedKey()];
+  return typeof entry.label === 'function' ? entry.label() : entry.label;
 }
 
 function getSpeed() {
@@ -87,10 +101,55 @@ function getSpeed() {
 // ---------------------------------------------------------------------------
 
 let lastAnalyticsTime = -1;
+let initToken = 0;
 
-function init() {
+/**
+ * Show how participant.js was interpreted, so the language and any runtime
+ * failure are visible instead of a silent fallback.
+ */
+function setRuntimeStatus({ state, info, error }) {
+  const label = info?.label ?? 'JavaScript';
+
+  const option = document.querySelector('#sim-algo option[value="participant"]');
+  if (option) option.textContent = `Participant (${label})`;
+
+  const el = document.getElementById('runtime-status');
+  if (!el) return;
+
+  el.classList.remove('is-ready', 'is-loading', 'is-error');
+
+  if (state === 'loading') {
+    el.classList.add('is-loading');
+    el.textContent = `${label} detected · starting offline runtime…`;
+  } else if (state === 'error') {
+    el.classList.add('is-error');
+    el.textContent = error ?? 'Participant runtime error';
+    console.error('Participant runtime:', error);
+  } else {
+    el.classList.add('is-ready');
+    el.textContent = `${label} detected · offline runtime ready`;
+  }
+}
+
+async function init() {
+  const token = ++initToken;
+
   // Generate demand once. Same seed → same schedule every time.
   requests = generateDemand(SEED);
+
+  const detected = runtimeApi.describeParticipant();
+  setRuntimeStatus({ state: 'loading', info: detected, error: null });
+
+  const { scheduler, info, error } = await runtimeApi.loadParticipantScheduler({
+    baseUrl: import.meta.env.BASE_URL,
+  });
+
+  // A newer init (e.g. hot reload) superseded this one — drop these results.
+  if (token !== initToken) return;
+
+  participantInfo = info;
+  currentParticipantAlgo = scheduler;
+  setRuntimeStatus({ state: error ? 'error' : 'ready', info, error });
 
   // Build simulation with selected algorithm.
   sim = new Simulation(requests, getActiveAlgo());
@@ -110,9 +169,6 @@ function init() {
   updateAnalytics(requests, sim);
   showSimEnded(false);
   updateRunPauseButtons(false);
-
-  // Switch active algorithm cleanly on selection change
-  document.getElementById('sim-algo')?.addEventListener('change', handleReset);
 }
 
 // ---------------------------------------------------------------------------
@@ -159,7 +215,7 @@ function render() {
  * Processes a batch of simulation ticks, then renders.
  */
 function frame() {
-  if (!isRunning) {
+  if (!isRunning || !sim) {
     requestAnimationFrame(frame);
     return;
   }
@@ -185,7 +241,7 @@ function frame() {
 // ---------------------------------------------------------------------------
 
 function handleRun() {
-  if (simEnded) return;
+  if (!sim || simEnded) return;
   isRunning = true;
   updateRunPauseButtons(true);
 }
@@ -196,6 +252,7 @@ function handlePause() {
 }
 
 function handleReset() {
+  if (!requests) return;
   isRunning = false;
   simEnded  = false;
   lastAnalyticsTime = -1;
@@ -212,8 +269,7 @@ function handleReset() {
 // Boot
 // ---------------------------------------------------------------------------
 
-init();
-requestAnimationFrame(frame);
+document.getElementById('sim-algo')?.addEventListener('change', handleReset);
 
 wireControls({
   onRun:             handleRun,
@@ -225,12 +281,19 @@ wireControls({
   seed:              SEED,
 });
 
-// Vite HMR: if the participant module is updated, reset the simulation
-// so the new code takes effect without a full page reload.
+requestAnimationFrame(frame);
+init();
+
+// Vite HMR: participant.js is imported as raw text by runtime.js, so editing
+// it (even into another language) rebuilds the scheduler and resets the UI.
 if (import.meta.hot) {
-  import.meta.hot.accept('./algorithms/participant.js', (newModule) => {
-    if (!newModule) return;
-    currentParticipantAlgo = newModule.assignElevator;
-    handleReset();
+  import.meta.hot.accept('./algorithms/runtime.js', (next) => {
+    if (next) {
+      runtimeApi = {
+        loadParticipantScheduler: next.loadParticipantScheduler,
+        describeParticipant: next.describeParticipant,
+      };
+    }
+    init();
   });
 }

@@ -1021,6 +1021,31 @@ body {
   font-weight: 600;
 }
 
+/* Language / runtime status under the algorithm selector */
+.runtime-status {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-muted);
+  border-left: 2px solid rgba(148, 163, 184, 0.35);
+  padding-left: 7px;
+}
+
+.runtime-status.is-ready {
+  color: var(--text-mint-bright);
+  border-left-color: var(--text-mint-bright);
+}
+
+.runtime-status.is-loading {
+  color: #fbbf24;
+  border-left-color: #fbbf24;
+}
+
+.runtime-status.is-error {
+  color: #f87171;
+  border-left-color: #f87171;
+}
+
 .buttons-row {
   display: flex;
   gap: 8px;

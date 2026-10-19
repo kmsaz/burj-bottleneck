@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { assignElevator as baselineAlgo } from '../src/algorithms/baseline.js';
-import { assignElevator as participantAlgo } from '../src/algorithms/participant.js';
 import { assignElevator as starterAlgo } from '../src/algorithms/starter.js';
 import { assignElevator as developerAlgo } from '../src/algorithms/developer.js';
 import { Simulation } from '../src/engine/simulation.js';
@@ -66,12 +65,6 @@ describe('Scheduling Algorithms', () => {
     // Should choose Elevator 1 despite El 0 being closer
     const req = { origin: 2, dest: 6, count: 1 };
     expect(baselineAlgo(req, fullElevators, START_TIME)).toBe(1);
-  });
-
-  it('participant algorithm returns a valid elevator index (0 or 1)', () => {
-    const req = { origin: 0, dest: 5, count: 1 };
-    const choice = participantAlgo(req, mockElevators, START_TIME);
-    expect([0, 1]).toContain(choice);
   });
 
   it('simulation engine safely falls back to elevator 0 on invalid or throwing algorithm outputs', () => {
