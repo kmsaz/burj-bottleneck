@@ -39,13 +39,22 @@ npm test
 
 ## 2. Which File to Edit
 
-You only need to edit **one file**:
+Write your solution in **one file**:
 
 ```text
 src/algorithms/participant.js
 ```
 
-The baseline algorithm is located in `src/algorithms/baseline.js` for reference. **Do not modify the baseline, engine, or evaluation files.**
+It ships **blank**: a documented template that currently sends every group to Elevator A. Fill in `assignElevator` and both the live simulation and the evaluation table pick up your changes.
+
+| File | Role |
+|---|---|
+| `src/algorithms/participant.js` | **Yours.** Blank template to implement. |
+| `src/algorithms/starter.js` | Editable copy of the nearest-car strategy — a known-good starting point. |
+| `src/algorithms/developer.js` | Reference "ideal" implementation that models the engine's service sequence (the target to beat). |
+| `src/algorithms/baseline.js` | Protected benchmark. **Do not modify.** |
+
+**Do not modify the baseline, engine, or evaluation files.**
 
 ---
 
@@ -118,7 +127,7 @@ Elevator specs:
 
 ## 5. How Evaluation Works
 
-Click **"Run Full Evaluation"** in the web interface (or run via tests) to evaluate both your algorithm and the baseline headlessly across the entire 15-hour day.
+Click **"Run Full Evaluation"** in the web interface (or run via tests) to evaluate the algorithm selected in the dropdown against the baseline headlessly across the entire 15-hour day.
 
 Both algorithms run on the **exact same pre-generated passenger schedule** starting from identical initial conditions.
 

@@ -27,6 +27,8 @@ import {
 } from './ui/controls.js';
 import { assignElevator as baselineAlgo }    from './algorithms/baseline.js';
 import { assignElevator as participantAlgo } from './algorithms/participant.js';
+import { assignElevator as starterAlgo }     from './algorithms/starter.js';
+import { assignElevator as developerAlgo }   from './algorithms/developer.js';
 import { ElevatorState } from './engine/elevator.js';
 
 // ---------------------------------------------------------------------------
@@ -51,9 +53,28 @@ const SPEED_OPTIONS = {
 
 let currentParticipantAlgo = participantAlgo;
 
-function getActiveAlgo() {
+// Every selectable algorithm, keyed by the <option> value in index.html.
+// Each `get` returns the scheduler function itself; the participant entry is a
+// getter so Vite hot-reload can swap that module without a full reload.
+const ALGORITHMS = {
+  participant: { label: 'Participant (blank)', get: () => currentParticipantAlgo },
+  starter:     { label: 'Starter (Nearest)',   get: () => starterAlgo },
+  developer:   { label: 'Developer (Ideal)',   get: () => developerAlgo },
+  baseline:    { label: 'Baseline (Protected)', get: () => baselineAlgo },
+};
+
+function getSelectedKey() {
   const sel = document.getElementById('sim-algo');
-  return sel?.value === 'baseline' ? baselineAlgo : currentParticipantAlgo;
+  const key = sel?.value;
+  return ALGORITHMS[key] ? key : 'developer';
+}
+
+function getActiveAlgo() {
+  return ALGORITHMS[getSelectedKey()].get();
+}
+
+function getActiveAlgoLabel() {
+  return ALGORITHMS[getSelectedKey()].label;
 }
 
 function getSpeed() {
@@ -195,35 +216,21 @@ init();
 requestAnimationFrame(frame);
 
 wireControls({
-  onRun:        handleRun,
-  onPause:      handlePause,
-  onReset:      handleReset,
-  baselineFn:   baselineAlgo,
-  participantFn: currentParticipantAlgo,
-  seed:         SEED,
+  onRun:             handleRun,
+  onPause:           handlePause,
+  onReset:           handleReset,
+  baselineFn:        baselineAlgo,
+  getParticipantFn:  getActiveAlgo,
+  getParticipantLabel: getActiveAlgoLabel,
+  seed:              SEED,
 });
 
 // Vite HMR: if the participant module is updated, reset the simulation
 // so the new code takes effect without a full page reload.
 if (import.meta.hot) {
   import.meta.hot.accept('./algorithms/participant.js', (newModule) => {
-    if (newModule) {
-      currentParticipantAlgo = newModule.assignElevator;
-      sim = new Simulation(requests, getActiveAlgo());
-      isRunning = false;
-      simEnded  = false;
-      showSimEnded(false);
-      updateRunPauseButtons(false);
-      render();
-      // Also update the eval button's reference.
-      wireControls({
-        onRun:         handleRun,
-        onPause:       handlePause,
-        onReset:       handleReset,
-        baselineFn:    baselineAlgo,
-        participantFn: currentParticipantAlgo,
-        seed:          SEED,
-      });
-    }
+    if (!newModule) return;
+    currentParticipantAlgo = newModule.assignElevator;
+    handleReset();
   });
 }

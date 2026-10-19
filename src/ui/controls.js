@@ -26,17 +26,34 @@ const METRIC_KEYS = [
  * @param {Function} opts.onPause   () → void  Pause the simulation.
  * @param {Function} opts.onReset   () → void  Reset the simulation.
  * @param {Function} opts.getSpeed  () → number  Current ticks-per-frame multiplier.
- * @param {Function} opts.baselineFn    Baseline algorithm function.
- * @param {Function} opts.participantFn Participant algorithm function.
+ * @param {Function} opts.baselineFn        Baseline algorithm function.
+ * @param {Function} opts.getParticipantFn  () → Function  Currently selected
+ *                                          algorithm to benchmark.
+ * @param {Function} [opts.getParticipantLabel] () → string  Label for the
+ *                                          selected algorithm's column.
  * @param {string}   opts.seed      Current seed string.
  */
-export function wireControls({ onRun, onPause, onReset, baselineFn, participantFn, seed }) {
+export function wireControls({
+  onRun,
+  onPause,
+  onReset,
+  baselineFn,
+  getParticipantFn,
+  getParticipantLabel,
+  seed,
+}) {
   document.getElementById('btn-run').addEventListener('click', onRun);
   document.getElementById('btn-pause').addEventListener('click', onPause);
   document.getElementById('btn-reset').addEventListener('click', onReset);
 
   document.getElementById('btn-eval').addEventListener('click', () => {
-    runEvaluation(baselineFn, participantFn, seed);
+    // Resolve the algorithm at click time so switching the selector is honoured.
+    runEvaluation(
+      baselineFn,
+      getParticipantFn(),
+      seed,
+      typeof getParticipantLabel === 'function' ? getParticipantLabel() : undefined,
+    );
   });
 }
 
@@ -123,9 +140,14 @@ export function updateEventLog(events) {
 /**
  * Run headless evaluation and display results.
  */
-function runEvaluation(baselineFn, participantFn, seed) {
+function runEvaluation(baselineFn, participantFn, seed, label) {
   const btn = document.getElementById('btn-eval');
   if (btn) { btn.disabled = true; btn.textContent = 'Evaluating…'; }
+
+  if (label) {
+    const header = document.getElementById('eval-col-selected');
+    if (header) header.textContent = label;
+  }
 
   // Defer to allow the browser to repaint the disabled state.
   setTimeout(() => {
@@ -135,7 +157,7 @@ function runEvaluation(baselineFn, participantFn, seed) {
     } catch (err) {
       console.error('Evaluation failed:', err);
     } finally {
-      if (btn) { btn.disabled = false; btn.textContent = 'Run Evaluation'; }
+      if (btn) { btn.disabled = false; btn.textContent = 'Run Full Evaluation'; }
     }
   }, 0);
 }

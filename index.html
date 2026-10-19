@@ -200,8 +200,10 @@
           <div class="algo-select-wrap">
             <label class="control-label" for="sim-algo">Active Algorithm</label>
             <select id="sim-algo" title="Choose which algorithm to simulate live">
-              <option value="participant" selected>Participant Algorithm</option>
-              <option value="baseline">Baseline (Nearest)</option>
+              <option value="developer" selected>Developer (Ideal)</option>
+              <option value="participant">Participant (blank)</option>
+              <option value="starter">Starter (Nearest)</option>
+              <option value="baseline">Baseline (Protected)</option>
             </select>
           </div>
           <div class="buttons-row">
@@ -246,7 +248,7 @@
       <section class="side-section">
         <h3>Evaluation & Benchmark</h3>
         <p class="info-text">
-          Evaluate both algorithms across the full 15-hour day on identical passenger schedules:
+          Evaluate the selected algorithm against the baseline across the full 15-hour day on identical passenger schedules:
         </p>
         <button id="btn-eval" class="btn-eval">Run Full Evaluation</button>
         <table id="eval-results">
@@ -254,7 +256,7 @@
             <tr>
               <th>Metric</th>
               <th>Baseline</th>
-              <th>Participant</th>
+              <th id="eval-col-selected">Selected</th>
               <th>Delta</th>
             </tr>
           </thead>
@@ -264,9 +266,11 @@
 
       <!-- Participant Quick Guide -->
       <section class="side-section">
-        <h3>Participant File</h3>
-        <p class="info-text">Edit your scheduling algorithm in:</p>
+        <h3>Algorithm Files</h3>
+        <p class="info-text">Write your scheduling algorithm in:</p>
         <code class="file-path">src/algorithms/participant.js</code>
+        <p class="info-text">Reference implementations:</p>
+        <code class="file-path">starter.js&nbsp;·&nbsp;developer.js&nbsp;·&nbsp;baseline.js</code>
       </section>
     </aside>
   </main>

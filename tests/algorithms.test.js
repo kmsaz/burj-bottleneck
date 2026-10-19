@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { assignElevator as baselineAlgo } from '../src/algorithms/baseline.js';
 import { assignElevator as participantAlgo } from '../src/algorithms/participant.js';
+import { assignElevator as starterAlgo } from '../src/algorithms/starter.js';
+import { assignElevator as developerAlgo } from '../src/algorithms/developer.js';
 import { Simulation } from '../src/engine/simulation.js';
 import { START_TIME } from '../src/engine/constants.js';
 
@@ -123,5 +125,73 @@ describe('Scheduling Algorithms', () => {
     expect(() => {
       receivedRequest.origin = 99;
     }).toThrow();
+  });
+});
+
+describe('Shipped reference algorithms', () => {
+  const idleCars = [
+    {
+      id: 0,
+      floor: 0,
+      state: 'IDLE',
+      direction: 0,
+      occupancy: 0,
+      capacity: 10,
+      destinations: [],
+      targetFloor: null,
+      assignmentCount: 0,
+    },
+    {
+      id: 1,
+      floor: 8,
+      state: 'IDLE',
+      direction: 0,
+      occupancy: 0,
+      capacity: 10,
+      destinations: [],
+      targetFloor: null,
+      assignmentCount: 0,
+    },
+  ];
+
+  it('starter sends each request to the nearer car', () => {
+    expect(starterAlgo({ origin: 1, dest: 4, count: 1 }, idleCars, START_TIME)).toBe(0);
+    expect(starterAlgo({ origin: 9, dest: 2, count: 1 }, idleCars, START_TIME)).toBe(1);
+  });
+
+  it('starter penalises a full car', () => {
+    const fullFirst = [
+      { ...idleCars[0], floor: 1, occupancy: 10 },
+      { ...idleCars[1], floor: 5 },
+    ];
+    expect(starterAlgo({ origin: 2, dest: 6, count: 1 }, fullFirst, START_TIME)).toBe(1);
+  });
+
+  it('developer sends each request to the nearer car', () => {
+    expect(developerAlgo({ origin: 1, dest: 4, count: 1 }, idleCars, START_TIME)).toBe(0);
+    expect(developerAlgo({ origin: 9, dest: 2, count: 1 }, idleCars, START_TIME)).toBe(1);
+  });
+
+  it('developer honours a moving car\'s committed leg', () => {
+    // Car A is mid-flight to floor 9 and cannot turn back for a floor-2 call;
+    // Car B is idle at the lobby and should get the request.
+    const moving = [
+      {
+        ...idleCars[0],
+        floor: 4,
+        state: 'MOVING',
+        direction: 1,
+        targetFloor: 9,
+        destinations: [9],
+        assignmentCount: 0,
+      },
+      { ...idleCars[1], floor: 0 },
+    ];
+    expect(developerAlgo({ origin: 2, dest: 6, count: 1 }, moving, START_TIME)).toBe(1);
+  });
+
+  it('reference algorithms tolerate an empty elevator snapshot', () => {
+    expect(starterAlgo({ origin: 2, dest: 5, count: 1 }, [], START_TIME)).toBe(0);
+    expect(developerAlgo({ origin: 2, dest: 5, count: 1 }, [], START_TIME)).toBe(0);
   });
 });
