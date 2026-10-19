@@ -6,6 +6,8 @@ Your mission is to write an intelligent elevator scheduling algorithm for **Al N
 
 Can you beat the provided baseline algorithm and minimize waiting times across the tower?
 
+**Live demo:** https://kmsaz.github.io/burj-bottleneck/ — the full simulation runs in your browser, no install required.
+
 ---
 
 ## 1. Quick Start
